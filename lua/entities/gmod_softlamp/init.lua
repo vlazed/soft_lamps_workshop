@@ -7,11 +7,8 @@ DEFINE_BASECLASS( "base_gmodentity" )
 
 include("shared.lua")
 
---[[---------------------------------------------------------
-	Name: Initialize
-	Desc: Pretty much copied from gmod_lamp, no idea what's
-	done here.
------------------------------------------------------------]]
+--- Pretty much copied from gmod_lamp, no idea what's
+--- done here.
 function ENT:Initialize()
 	self:PhysicsInit( SOLID_VPHYSICS )
 	self:SetMoveType( MOVETYPE_VPHYSICS )
@@ -41,6 +38,7 @@ concommand.Add("softlamp_come", function()
 end, nil, nil, FCVAR_SPONLY)
 
 function ENT:Think()
+	---@diagnostic disable
 	if self:GetDelete1() and self:GetDelete2() then
 		self:Remove()
 		return BaseClass.Think(self)
@@ -64,6 +62,7 @@ function ENT:Think()
 	self.brightness = self:GetBrightness()
 
 	return BaseClass.Think(self)
+	---@diagnostic enable
 end
 
 function ENT:Switch( on )
@@ -72,17 +71,10 @@ function ENT:Switch( on )
 	self:SetOn(on)
 end
 
---[[---------------------------------------------------------
-   Name: Toggle
------------------------------------------------------------]]
 function ENT:Toggle()
 	self:Switch( !self:GetOn() );
 end
 
---[[---------------------------------------------------------
-	Name: OnTakeDamage
-	Desc: Pretty much copied from gmod_lamp.
------------------------------------------------------------]]
 function ENT:OnTakeDamage( dmginfo )
 	self:TakePhysicsDamage( dmginfo )
 end

@@ -5,22 +5,11 @@ SoftLampsBounceTable = {}
 local MinLight = 5
 
 concommand.Add("lightbounce_calculate", function(Ply, Cmd, Args)
---	local flashlightdepthres = GetConVar("r_flashlightdepthres"):GetInt()
-	--if flashlightdepthres != 1024 then
-		--print("r_flashlightdepthres is "..flashlightdepthres.." ! Set it to 1024 ! Don't forget to turn off all lights before doing so!")
-		--return
-	--end
 
 	if Ply:GetActiveWeapon():GetClass() == "gmod_camera" then
 		print("Camera is equipped! Equip something that doesn't override view!")
 		return
 	end
-
---	local draweffectrings = GetConVar("cl_draweffectrings"):GetInt()
---	if draweffectrings == 1 then
---		print("cl_draweffectrings is "..draweffectrings.." ! Set it to 0!")
---		return
---	end
 
 	local function DoBounce()
 
@@ -30,13 +19,6 @@ concommand.Add("lightbounce_calculate", function(Ply, Cmd, Args)
 
 					SoftLampsBounceTable[SoftLamp] = {}
 
-					--VecTable = SoftLamp:GetVecs(true, true)
-
-					--PrintTable(VecTable)
-
-					--for PT, PTTable in pairs(VecTable.positions) do
-						--relpos = PTTable.vec
-						--relang = PTTable.ang
 						local TraceTable = 	{
 												Slave = Ply,
 												StartPos = SoftLamp:LocalToWorld(SoftLamp:GetLightOffset()),
@@ -149,12 +131,6 @@ end)
 ---- LightSpray Extras ----
 concommand.Add("lightspray_calculate", function(Ply, Cmd, Args)
 
---	local draweffectrings = GetConVar("cl_draweffectrings"):GetInt()
---	if draweffectrings == 1 then
---		print("cl_draweffectrings is "..draweffectrings.." ! Set it to 0!")
---		return
---	end
-
 	local function DoBounce()
 
 		if tonumber(Args[1]) and tonumber(Args[2]) and tonumber(Args[3]) then
@@ -234,12 +210,6 @@ concommand.Add("lightspray_calculate", function(Ply, Cmd, Args)
 end)
 
 concommand.Add("lightspray_calculate_advanced", function(Ply, Cmd, Args)
-
---	local draweffectrings = GetConVar("cl_draweffectrings"):GetInt()
---	if draweffectrings == 1 then
---		print("cl_draweffectrings is "..draweffectrings.." ! Set it to 0!")
---		return
---	end
 
 	local function DoBounce()
 

@@ -182,7 +182,7 @@ function TOOL:Reload( trace )
 	local mat = Material( texture )
 	local texture = mat:GetString( "$basetexture" )
 
-	if ( !self:GetSWEP():CheckLimit( "softlamps" ) ) then return false end
+	if ( not self:GetWeapon():CheckLimit( "softlamps" ) ) then return false end
 
 	local lamp = MakeSoftLamp( ply, r, g, b, key, toggle, texture, mdl, fov, distance, nearz, bright, !toggle && on, softshape, softradius, softlayers, { Pos = pos, Angle = ang }, orthoon, orthosize )
 
@@ -231,15 +231,34 @@ function TOOL:RightClick( trace )
 end
 
 if ( SERVER ) then
+	---@param pl Player
+	---@param r number
+	---@param g number
+	---@param b number
+	---@param KeyDown integer
+	---@param toggle boolean
+	---@param Texture string
+	---@param Model string
+	---@param fov number
+	---@param distance number
+	---@param nearz number
+	---@param brightness number
+	---@param on boolean
+	---@param SoftShape any
+	---@param SoftRadius number
+	---@param SoftLayers number
+	---@param Data any
+	---@param OrthoOn any
+	---@param OrthoSize any
+	---@return Entity
 	function MakeSoftLamp(pl, r, g, b, KeyDown, toggle, Texture, Model, fov, distance, nearz, brightness, on, SoftShape, SoftRadius, SoftLayers, Data, OrthoOn, OrthoSize)
-
-		--if (IsValid(pl) and !pl:CheckLimit("softlamps")) then return false end
 
 		local lamp = ents.Create("gmod_softlamp")
 
-		if (!IsValid(lamp)) then return end
+		if (!IsValid(lamp)) then return NULL end
 
 		lamp:SetModel( Model )
+		---@diagnostic disable
 		lamp:SetFlashlightTexture( Texture )
 		lamp:SetLightFOV( fov )
 		lamp:SetLightColor(Vector(r/255, g/255, b/255))
@@ -270,6 +289,7 @@ if ( SERVER ) then
 		duplicator.DoGenericPhysics( lamp, pl, Data )
 
 		lamp:SetPlayer( pl )
+		---@diagnostic enable
 
 		if ( IsValid( pl ) ) then
 			pl:AddCount( "softlamps", lamp )

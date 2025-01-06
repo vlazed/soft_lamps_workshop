@@ -1,4 +1,3 @@
---print("\tIF YOU SEE THIS TELL NEATNIT!! SoftPoster just got loaded!")
 local extraframes = CreateClientConVar("poster_extraframes", "0")
 
 local tex_render = render.GetSuperFPTex()
@@ -44,9 +43,6 @@ local tex_blendint =  GetRenderTargetEx("VolumetricLightingBlend",  ScrW(), ScrH
 		0x800000	-- No Depth Buffer
 	),
 	CREATERENDERTARGETFLAGS_HDR, IMAGE_FORMAT_RGBA16161616)
--- print(tex_blendint:Width(), tex_blendint:Height())
---mat_add:SetString("$linearwrite", "1")
---mat_copy:SetString("$linearwrite", "1")
 
 
 local renders = 0
@@ -72,11 +68,12 @@ concommand.Add("poster_additive", function(ply, cmd, args)
 end)
 
 
+---Render the scene normally to the whole texture (with inevitable 100% alpha)
+---BUG!! Rendering into a non-default RT disables anti-aliasing!!
+---WORKAROUND: Render to default RT, copy over to tex_render
+---Workaround downside is that bright pixels (brighter than 255) will be capped, therefore color quality is lost.
+---@param progressbardata ProgressBarData
 local function DoRender(progressbardata)
-	-- Render the scene normally to the whole texture (with inevitable 100% alpha)
-	-- BUG!! Rendering into a non-default RT disables anti-aliasing!!
-	-- WORKAROUND: Render to default RT, copy over to tex_render
-	-- Workaround downside is that bright pixels (brighter than 255) will be capped, therefore color quality is lost.
 	if antialias then
 		-- workaround
 		render.RenderView()
@@ -119,7 +116,7 @@ local function DoRender(progressbardata)
 	cam.Start2D()
 		local y = ScrH() - 20
 		local x = ScrW() / 2
-		for k, v in ipairs(progressbardata) do
+		for _, v in ipairs(progressbardata) do
 			-- Grey outline:
 			surface.SetDrawColor(50, 50, 50)
 			surface.DrawRect(x-301, y-10, 602, 20)
@@ -181,18 +178,20 @@ local colormod2 = {
 	[ "$pp_colour_mulg" ] = 0,
 	[ "$pp_colour_mulb" ] = 0
 }
-function SingleRender(ent, progressbardata, fuckshit, camstarter)
+
+---@param ent Entity
+---@param progressbardata ProgressBarData
+---@param _ boolean?
+---@param camstarter RenderCamData
+function SingleRender(ent, progressbardata, _, camstarter)
 	renders = renders + 1
 
-	//if renders == 1 or fuckshit then RenderZBuffer() end	-- render depth buffer on first render
 	RenderZBuffer()
 
 	cam.Start(camstarter)
 		render.Clear(0, 0, 0, 255, false, true)
 		ent:DrawModel()
 	cam.End()
-
-	-- render.Clear(1, 1, 1, 255)
 
 	DrawColorModify(colormod)	-- all pixels are either 0 or 255 (R=G=B)
 	DrawColorModify(colormod2)	-- all pixels are either 0 or 1
@@ -202,10 +201,6 @@ function SingleRender(ent, progressbardata, fuckshit, camstarter)
 		mat_copy:SetTexture("$basetexture", tex_scrfx)
 		render.SetMaterial(mat_copy)
 		render.DrawScreenQuad()
-		-- render.Clear(1, 1, 1, 255)
-
-		-- render.CapturePixels()
-		--print(render.ReadPixel(ScrW()/2,ScrH()/2))
 	render.PopRenderTarget()
 
 
@@ -228,49 +223,20 @@ function SingleRender(ent, progressbardata, fuckshit, camstarter)
 				-- give up on anti-aliasing to get better color accuracy in bright areas
 				render.PushRenderTarget(tex_blend)--blentint
 					if renders == 1 then render.Clear(0, 0, 0, 255) end	-- clear on first render
-					-- local br = renders-1
-					-- print("writing:",br)
-					-- render.Clear(br, br, br, 255)
-					-- render.CapturePixels()
-					-- local a, b, c = render.ReadPixel(ScrW()/2,ScrH()/2)
 
 					-- Additively paste the current frame onto the blend
 					mat_add:SetTexture("$basetexture", tex_render)--tex_renderint
 					render.SetMaterial(mat_add)
 					render.DrawScreenQuad()
 
-					-- render.CapturePixels()
-					-- local d, e, f = render.ReadPixel(ScrW()/2,ScrH()/2)
 				render.PopRenderTarget()
 			end
-
-	-- mat_copy:SetTexture("$basetexture", tex_blendint)
-	-- render.SetMaterial(mat_copy)
-	-- render.DrawScreenQuad()
-
-	-- render.CapturePixels()
-	-- local g, h, i = render.ReadPixel(ScrW()/2,ScrH()/2)
-
-	--print(renders,"before: ", a, b, c, "after:", d, e, f, "copied:", g, h, i)
-
-
-	-- Draw progress on the screen so the user can get a sense of progress and know that the game isn't stuck
-	-- Put something pretty and technical on the screen:
-	-- mat_copy:SetTexture("$basetexture", tex_render)
-	-- render.SetMaterial(mat_copy)
-	-- render.DrawScreenQuad()
-
-	-- DrawColorModify(colormod)	-- re-brighten the 1 1 1 pixels to 255 255 255 for display on the screen
-	-- mat_divide:SetTexture("$fbtexture", tex_blendint)
-	-- mat_divide:SetFloat("$pp_colour_contrast", 1/renders)
-	-- render.SetMaterial(mat_divide)
-	-- render.DrawScreenQuad()
 
 	-- Draw progress bars:
 	cam.Start2D()
 		local y = ScrH() - 20
 		local x = ScrW() / 2
-		for k, v in ipairs(progressbardata) do
+		for _, v in ipairs(progressbardata) do
 			-- Grey outline:
 			surface.SetDrawColor(50, 50, 50)
 			surface.DrawRect(x-301, y-10, 602, 20)
@@ -334,14 +300,8 @@ local function FinishRender()
 	render.PopRenderTarget()
 
 	-- copy the blended image onto the framebuffer:
-	-- if planes then
-	-- 	mat_gmodscreenspace:SetTexture("$basetexture", tex_blend)
-	-- 	mat_gmodscreenspace:SetFloat("$alpha", 1)
-	-- 	render.SetMaterial(mat_gmodscreenspace)
-	-- else
 	mat_copy:SetTexture("$basetexture", rt)
 	render.SetMaterial(mat_copy)
-	-- end
 	render.DrawScreenQuad()
 	render.DrawScreenQuad()	-- done twice fix bug where the first DrawScreenQuad is ignored for some reason.
 
@@ -350,15 +310,17 @@ local function FinishRender()
 	-- let the render end naturally
 end
 
+---@param postermul number
+---@param split number?
 local function ReFinishRender(postermul, split)
 
-	mul = (planes and 1 or 1) / (planes and someparameter or renders)
+	local mul = (planes and 1 or 1) / (planes and someparameter or renders)
 
 	if additive then mul = 1 end
 
 	mul = mul / darken
 
-	rt = tex_blend
+	local rt = tex_blend
 	lastRT = rt
 	render.PushRenderTarget(lastRT)
 		mat_divide:SetTexture("$fbtexture", lastRT)
@@ -380,7 +342,8 @@ concommand.Add("poster_redo", function(ply, cmd, args)
 	ReFinishRender(postermul)
 end)
 
-
+---@param postermul number
+---@param split number
 local function SoftPoster(postermul, split)
 	local extra = extraframes:GetInt()
 	local callsleft = postermul * postermul + extra	-- number of calls of the render hook that need to be hooked, sometimes 1 extra called pre-poster for some reason (not always?)
@@ -409,6 +372,7 @@ local function SoftPoster(postermul, split)
 		end
 	end
 
+	---@type ProgressBarData
 	local progressbar = {
 		{
 			title = "Poster",
@@ -426,7 +390,7 @@ local function SoftPoster(postermul, split)
 	hook.Add("RenderScene", "SoftPoster", function(ViewOrigin, ViewAngles, ViewFOV)
 		progressbar[1].progress = progressbar[1].progress + 1
 
-		i = 0
+		local i = 0
 
 		for lamp in pairs(lights) do
 			lamp:HeavyLightPrepare()
@@ -445,6 +409,9 @@ local function SoftPoster(postermul, split)
 
 		callsleft = callsleft - 1
 		if (callsleft <= 0) then
+			for lamp, _ in pairs(lights) do
+				lamp:HeavyLightEnd()
+			end
 			hook.Remove("RenderScene","SoftPoster")
 
 			local endtime = SysTime()
@@ -461,6 +428,9 @@ local function SoftPoster(postermul, split)
 	RunConsoleCommand("poster", postermul, split)
 end
 
+---@param godrays number
+---@param postermul number
+---@param split number
 local function GodRaysPoster(godrays, postermul, split)
 	godrays = godrays + 0	-- convert to number
 
@@ -492,6 +462,7 @@ local function GodRaysPoster(godrays, postermul, split)
 	end
 
 	local w, h = ScrW(), ScrH()
+	---@type RenderCamData[]
 	local camstarts = {}
 
 	for y = 0, postermul-1 do
@@ -550,20 +521,18 @@ local function GodRaysPoster(godrays, postermul, split)
 				progressbar[3].progress = vlpindex
 				progressbar[3].max = vlpmax
 
-				-- enttorender:SetLocalPos(Vector(math.Remap(vlpindex,1,vlpmax,0,100), 0, 0))
-				-- enttorender:SetupBones()
-				-- lamp.HeavyLightPT:Update()
-				-- SingleRender(enttorender, progressbar)
 				SingleRender(vlp, progressbar, vlpindex == 1, camstarts[i])
-				-- DoRender(progressbar)
 
 				cont, ptindex, ptmax, vlp, vlpindex, vlpmax = lamp:HeavyLightTick()
 			end
 		end
-		FinishRender(false)
+		FinishRender()
 
 		callsleft = callsleft - 1
 		if (callsleft <= 0) then
+			for lamp, _ in pairs(lights) do
+				lamp:HeavyLightEnd()
+			end
 			hook.Remove("RenderScene", "SoftPoster")
 
 			local endtime = SysTime()
@@ -586,12 +555,18 @@ local function InternalConCommand(ply, cmd, args)
 end
 
 concommand.Add("poster_soft", function(ply, cmd, args)
-	//antialias = false
 	if #args < 1 then
 		print("poster_soft <poster size> <poster split>")
 		return
 	end
-	SoftPoster(unpack(args))
+	local defaultBright = GetConVar("mat_fullbright"):GetInt()
+	RunConsoleCommand("mat_fullbright", 0 )
+	timer.Simple(1, function()
+		SoftPoster(unpack(args))
+		timer.Simple(0.52, function()
+			RunConsoleCommand("mat_fullbright", defaultBright )
+		end)
+	end)
 end)--, nil, nil, FCVAR_SPONLY)
 
 concommand.Add("poster_godrays", function(ply, cmd, args)
@@ -607,13 +582,11 @@ concommand.Add("poster_lightbounce_nearz_override", function(ply, cmd, args)
 	GlobalNearZ = args[1] + 0
 end)
 
---[[---------------------------
-untested because who the fuck
-tests stuff before  releasing
-it? hope it  works  and  hope
-it looks awesome :D
---]]---------------------------
-
+---@param lightsize number
+---@param lightbright number
+---@param lightpasses number
+---@param postermul number
+---@param split number
 local function LightBouncePoster( lightsize, lightbright, lightpasses, postermul, split )
 	local extra = extraframes:GetInt()
 	local callsleft = postermul * postermul + extra	-- number of calls of the render hook that need to be hooked, sometimes 1 extra called pre-poster for some reason (not always?)
@@ -673,7 +646,7 @@ local function LightBouncePoster( lightsize, lightbright, lightpasses, postermul
 	hook.Add("RenderScene", "SoftPoster", function(ViewOrigin, ViewAngles, ViewFOV)
 		progressbar[1].progress = progressbar[1].progress + 1
 
-		i = 0
+		local i = 0
 
 		for _, lamp in pairs(ents.FindByClass("gmod_softlamp")) do
 			lamp:ClearFlashlights()
@@ -722,7 +695,7 @@ local function LightBouncePoster( lightsize, lightbright, lightpasses, postermul
 	RunConsoleCommand("poster", postermul, split)
 end
 
-lightbounce_depthres = 1024
+local lightbounce_depthres = 1024
 
 concommand.Add("poster_lightbounce_depthres_override", function(ply, cmd, args)
 	lightbounce_depthres = args[1] + 0
@@ -733,7 +706,7 @@ concommand.Add("poster_lightbounce", function(ply, cmd, args)
 
 	local cvflashlightdepthres = GetConVar("r_flashlightdepthres")
 	local depthres = cvflashlightdepthres:GetInt()
-	if flashlightdepthres != lightbounce_depthres then
+	if depthres != lightbounce_depthres then
 		print("r_flashlightdepthres is "..depthres.." ! Setting it to "..lightbounce_depthres.." ! Don't forget to turn off all lights before doing lightbounce")
 		RunConsoleCommand("r_flashlightdepthres", lightbounce_depthres)
 
