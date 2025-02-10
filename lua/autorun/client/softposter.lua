@@ -561,12 +561,16 @@ concommand.Add("poster_soft", function(ply, cmd, args)
 	end
 	local defaultBright = GetConVar("mat_fullbright"):GetInt()
 	RunConsoleCommand("mat_fullbright", 0 )
-	timer.Simple(1, function()
-		SoftPoster(unpack(args))
-		timer.Simple(0.52, function()
-			RunConsoleCommand("mat_fullbright", defaultBright )
+	if defaultBright == 1 then
+		timer.Simple(1, function()
+			SoftPoster(unpack(args))
+			timer.Simple(0.52, function()
+				RunConsoleCommand("mat_fullbright", defaultBright )
+			end)
 		end)
-	end)
+	else
+		SoftPoster(unpack(args))
+	end
 end)--, nil, nil, FCVAR_SPONLY)
 
 concommand.Add("poster_godrays", function(ply, cmd, args)
