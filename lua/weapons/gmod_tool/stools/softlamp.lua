@@ -51,6 +51,25 @@ TOOL.ClientConVar[ "layers" ] = "1"
 
 cleanup.Register( "softlamps" )
 
+-- Idiom to make certain brushes allow toolgun input
+local shouldCallHook = false
+hook.Add("EntityKeyValue", "SLAllowTool", function(ent, key, val)
+	if key == "gmod_allowtools" and not string.find(val, "softlamp") then
+		shouldCallHook = true
+	end
+
+	if shouldCallHook and key ~= "gmod_allowtools" then
+		hook.Run("SLAllowTool", ent)
+		shouldCallHook = false
+	end
+end)
+
+hook.Add("SLAllowTool", "SprayerAllowTool", function(ent)
+	if istable(ent.m_tblToolsAllowed) and #ent.m_tblToolsAllowed > 0 then
+		table.insert(ent.m_tblToolsAllowed, "softlamp")
+	end
+end)
+
 function TOOL:LeftClick( trace )
 
 	if ( IsValid( trace.Entity ) && trace.Entity:IsPlayer() ) then return false end

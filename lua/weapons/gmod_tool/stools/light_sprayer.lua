@@ -16,6 +16,25 @@ end
 
 local MinLight = 5
 
+-- Idiom to make certain brushes allow toolgun input
+local shouldCallHook = false
+hook.Add("EntityKeyValue", "LSAllowTool", function(ent, key, val)
+	if key == "gmod_allowtools" and not string.find(val, "light_sprayer") then
+		shouldCallHook = true
+	end
+
+	if shouldCallHook and key ~= "gmod_allowtools" then
+		hook.Run("LSAllowTool", ent)
+		shouldCallHook = false
+	end
+end)
+
+hook.Add("LSAllowTool", "SprayerAllowTool", function(ent)
+	if istable(ent.m_tblToolsAllowed) and #ent.m_tblToolsAllowed > 0 then
+		table.insert(ent.m_tblToolsAllowed, "light_sprayer")
+	end
+end)
+
 function TOOL:LeftClick(Trace)
 
 	local Ply = self:GetOwner()
