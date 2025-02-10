@@ -139,10 +139,18 @@ concommand.Add("lightspray_calculate", function(Ply, Cmd, Args)
 			ViewEnt:SetNoDraw(true)
 			Ply:SetNoDraw(true)
 
+			local EyePos = Ply:EyePos()
+			local EyeAng = Ply:EyeAngles()
+			
+			if ViewEnt ~= Ply then
+				EyePos = ViewEnt:GetPos()
+				EyeAng = ViewEnt:GetForward():Angle()
+			end
+
 			local TraceTable = 	{
 									Slave = Ply,
-									StartPos = Ply:EyePos(),
-									ForwardAngle = Ply:EyeAngles(),
+									StartPos = EyePos,
+									ForwardAngle = EyeAng,
 									FOV = Ply:GetFOV(),
 									NearZ = 1,
 									FarZ = tonumber(Args[3]),
@@ -219,10 +227,18 @@ concommand.Add("lightspray_calculate_advanced", function(Ply, Cmd, Args)
 			ViewEnt:SetNoDraw(true)
 			Ply:SetNoDraw(true)
 
+			local EyePos = Ply:EyePos()
+			local EyeAng = Ply:EyeAngles()
+			
+			if ViewEnt ~= Ply then
+				EyePos = ViewEnt:GetPos()
+				EyeAng = ViewEnt:GetForward():Angle()
+			end
+
 			local TraceTable = 	{
 									Slave = Ply,
-									StartPos = Ply:EyePos(),
-									ForwardAngle = Ply:EyeAngles(),
+									StartPos = EyePos,
+									ForwardAngle = EyeAng,
 									FOV = tonumber(Args[1]),
 									NearZ = tonumber(Args[7]),
 									FarZ = tonumber(Args[8]),

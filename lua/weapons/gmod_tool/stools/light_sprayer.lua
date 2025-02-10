@@ -19,9 +19,18 @@ local MinLight = 5
 function TOOL:LeftClick(Trace)
 
 	local Ply = self:GetOwner()
+
 	// ("lightspray_calculate <FOV> <Accuracy> <Scan Radius> <Interval> <Scan Jitter> <Position Offset> <Start Distance> <End Distance>")
 	if SERVER then
-		ents.FindByClass("vtrace_scanner")[1]:SetPos(Ply:EyePos())
+		local eyePos = Ply:EyePos()
+		
+		local ViewEnt = Ply:GetViewEntity()
+	
+		if ViewEnt ~= Ply then
+			eyePos = ViewEnt:GetPos()
+		end	
+
+		ents.FindByClass("vtrace_scanner")[1]:SetPos(eyePos)
 
 		Ply:ConCommand("lightspray_calculate_advanced ".." "..	self:GetClientInfo("scan_fov").." "..
 																self:GetClientInfo("scan_accuracy_tolerance").." "..
@@ -40,6 +49,11 @@ function TOOL:RightClick(Trace)
 		self:GetOwner():ConCommand("lightbounce_delete_points ".." "..self:GetClientInfo("del_radius").." "..self:GetClientInfo("del_tolerance"))
 	end
 end
+
+---@class ViewerEntity: Player
+---@field GetFOV fun(self: ViewerEntity): number
+---@field SetFOV fun(self: ViewerEntity, fov: number, time: number?)
+---@field OldFOV number
 
 function TOOL:Think()
 	if SERVER then
